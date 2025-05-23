@@ -1,11 +1,20 @@
-// Mengimpor modul Express dan MQTT
 var express = require("express");
 var mqtt = require("mqtt");
 var router = express.Router();
 
-// Mengekspor fungsi yang menerima parameter koneksi database (db)
+const mqttOptions = {
+  username: "dimas", // <-- Ganti dengan username HiveMQ Cloud
+  password: "TaEKD2025", // <-- Ganti dengan password HiveMQ Cloud
+  clientId: "vercel_client_" + Math.random().toString(16).substr(2, 8),
+  clean: true,
+  reconnectPeriod: 1000,
+  connectTimeout: 5000,
+};
+
+const brokerUrl =
+  "wss://3107ee96d14c4007908cdd3e772e6600.s1.eu.hivemq.cloud:8884/mqtt";
+
 module.exports = function (db) {
-  // Rute GET "/"
   router.get("/", function (req, res, next) {
     db.query("SELECT * FROM users", (err, data) => {
       if (err) {
@@ -22,7 +31,6 @@ module.exports = function (db) {
     });
   });
 
-  // Rute GET "/users"
   router.get("/users", function (req, res, next) {
     db.query("SELECT * FROM users ORDER BY id_user ASC", (err, result) => {
       if (err) {
@@ -30,15 +38,13 @@ module.exports = function (db) {
         return res.status(500).send("Database query error");
       }
 
-      const usersData = result.rows; // Ambil semua data pengguna
+      const usersData = result.rows;
 
-      // Koneksi ke broker MQTT
-      const mqttClient = mqtt.connect("mqtt://broker.hivemq.com");
+      const mqttClient = mqtt.connect(brokerUrl, mqttOptions);
 
       mqttClient.on("connect", () => {
         console.log("Connected to MQTT broker");
 
-        // Kirim data pengguna ke topik MQTT
         mqttClient.publish(
           "polines/TA2025",
           JSON.stringify(usersData),
@@ -48,17 +54,28 @@ module.exports = function (db) {
             } else {
               console.log("Data sent to MQTT:", usersData);
             }
-            mqttClient.end(); // Tutup koneksi MQTT
+            mqttClient.end();
           }
         );
       });
 
-      // Kirim data pengguna sebagai JSON ke klien HTTP
-      res.json(usersData); // Mengirim semua data pengguna sebagai JSON
+      mqttClient.on("error", (err) => {
+        console.error("MQTT connection error:", err);
+        mqttClient.end();
+      });
+
+      mqttClient.on("offline", () => {
+        console.error("MQTT client went offline");
+      });
+
+      mqttClient.on("close", () => {
+        console.log("MQTT connection closed");
+      });
+
+      res.json(usersData);
     });
   });
 
-  // Rute POST "/"
   router.post("/", function (req, res, next) {
     const {
       mode = null,
@@ -124,7 +141,7 @@ module.exports = function (db) {
         return res.status(500).send("Database query error");
       }
 
-      const mqttClient = mqtt.connect("mqtt://broker.hivemq.com");
+      const mqttClient = mqtt.connect(brokerUrl, mqttOptions);
 
       const dataToSend = {
         set_point: values[0],
@@ -149,7 +166,7 @@ module.exports = function (db) {
             } else {
               console.log("Data sent:", dataToSend);
             }
-            mqttClient.end(); // Tutup koneksi MQTT
+            mqttClient.end();
           }
         );
       });
