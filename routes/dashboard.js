@@ -169,6 +169,19 @@ module.exports = function (db) {
         );
       });
 
+      mqttClient.on("error", (err) => {
+        console.error("MQTT connection error:", err);
+        mqttClient.end();
+      });
+
+      mqttClient.on("offline", () => {
+        console.error("MQTT client went offline");
+      });
+
+      mqttClient.on("close", () => {
+        console.log("MQTT connection closed");
+      });
+
       res.status(200).send("Data updated successfully");
     });
   });
