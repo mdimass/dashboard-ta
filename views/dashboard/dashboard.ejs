@@ -82,19 +82,26 @@
   .bd-mode-toggle .dropdown-menu .active .bi {
     display: block !important;
   }
+
+  /* Set canvas to fill the available space */
+  #rpmChart {
+    height: 400px; /* Adjust as necessary */
+    width: 100%; /* Fill the width */
+  }
 </style>
 
-<!-- Custom styles for this template -->
-<link href="/stylesheets/dashboard.css" rel="stylesheet" />
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <header
   class="navbar sticky-top bg-dark flex-md-nowrap p-0 shadow"
   data-bs-theme="dark"
 >
-  <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 text-white" href="#"
-    >Kendali PID Kecepatan Motor DC</a
+  <a
+    class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 text-white"
+    href="https://web.polines.ac.id/id/"
+    >Politeknik Negeri Semarang</a
   >
-
   <ul class="navbar-nav flex-row d-md-none">
     <li class="nav-item text-nowrap">
       <button
@@ -112,8 +119,8 @@
   </ul>
 </header>
 
-<div class="container-fluid">
-  <div class="row">
+<div class="container-fluid" style="height: 86vh">
+  <div class="row" style="height: 100%">
     <div
       class="sidebar border border-right col-md-3 col-lg-2 p-2 bg-body-tertiary"
     >
@@ -135,7 +142,6 @@
         </div>
         <form id="control-form">
           <div class="offcanvas-body d-md-flex flex-column p-2 pt-lg-3">
-            <!-- Tempat Form -->
             <div class="mb-3">
               <label for="mode-kontrol" class="form-label">Control Mode</label>
               <div id="mode-kontrol" class="dropdown w-100">
@@ -178,6 +184,7 @@
                 id="Kp"
                 name="kp"
                 placeholder="Enter Kp"
+                step="0.001"
               />
             </div>
             <div class="mb-3">
@@ -189,6 +196,7 @@
                 id="Ki"
                 name="ki"
                 placeholder="Enter Ki"
+                step="0.001"
               />
             </div>
             <div class="mb-3">
@@ -200,8 +208,10 @@
                 id="Kd"
                 name="kd"
                 placeholder="Enter Kd"
+                step="0.001"
               />
             </div>
+
             <div class="mb-3">
               <label for="SetPoint" class="form-label">SetPoint :</label>
               <input
@@ -213,7 +223,19 @@
                 placeholder="Enter SetPoint"
               />
             </div>
-
+            <div class="mb-3">
+              <label for="SetPoint2" class="forl-label hidden"
+                >SetPoint 2:</label
+              >
+              <input
+                type="number"
+                min="0"
+                class="form-control hidden"
+                id="SetPoint2"
+                name="setpoint2"
+                placeholder="Enter SetPoint 2"
+              />
+            </div>
             <div class="mb-3">
               <label for="timesampling" class="form-label"
                 >Time Sampling (ms) :</label
@@ -246,9 +268,7 @@
       <div
         class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
       >
-        <!-- JUDUL -->
-        <h1 class="h2">Dashboard</h1>
-
+        <h4 class="h4">Dashboard Kendali Kecepatan Motor DC</h4>
         <div class="btn-toolbar mb-2 mb-md-0">
           <div class="btn-group me-2">
             <button type="button" class="btn btn-sm btn-outline-dark">
@@ -261,28 +281,83 @@
         </div>
       </div>
 
-      <canvas class="my-4 w-100" id="myChart" width="900" height="380"></canvas>
+      <div class="row">
+        <div class="col-md-12">
+          <canvas id="rpmChart"></canvas>
+        </div>
+      </div>
     </main>
   </div>
 </div>
+
 <script>
   $(document).ready(function () {
     // Hide PID-related inputs initially
-    $("#Kp, #Ki, #Kd").closest(".mb-3").hide(); //Menyembunyikan elemen Kp, Ki, dan Kd beserta label atau kontainernya
+    $("#Kp, #Ki, #Kd, #SetPoint2").closest(".mb-3").hide();
 
-    // Disable form inputs initially , Semua input dan tombol di form #control-form dinonaktifkan kecuali tombol dropdown (mode selector).
+    // Disable form inputs initially
     $("#control-form input").prop("disabled", true);
     $("#control-form button").not(".dropdown-toggle").prop("disabled", true);
+
+    // Initialize RPM Chart
+    const ctx = document.getElementById("rpmChart").getContext("2d");
+    const rpmChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: [], // Time sampling labels
+        datasets: [
+          {
+            label: "Set Point 1 (RPM)",
+            data: [],
+            borderColor: "rgba(75, 192, 192, 1)",
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+            borderWidth: 1,
+          },
+          {
+            label: "Set Point 2 (RPM)",
+            data: [],
+            borderColor: "rgba(255, 99, 132, 1)",
+            backgroundColor: "rgba(255, 99, 132, 0.2)",
+            borderWidth: 1,
+          },
+          {
+            label: "Output (RPM)",
+            data: [],
+            borderColor: "rgba(54, 162, 235, 1)",
+            backgroundColor: "rgba(54, 162, 235, 0.2)",
+            borderWidth: 1,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: "Time Sampling (ms)",
+            },
+          },
+          y: {
+            title: {
+              display: true,
+              text: "RPM",
+            },
+          },
+        },
+      },
+    });
+
+    let intervalId;
 
     // When a mode is selected from the dropdown
     $(".dropdown-item").click(function () {
       var selectedMode = $(this).text().trim();
       var modeButton = $(".dropdown-toggle");
 
-      // If "Select Mode" is clicked, reset everything
       if (selectedMode === "Select Mode") {
         modeButton.text("Select Mode");
-        $("#Kp, #Ki, #Kd").closest(".mb-3").hide();
+        $("#Kp, #Ki, #Kd, #SetPoint2").closest(".mb-3").hide();
         $("#control-form input").prop("disabled", true);
         $("#control-form button")
           .not(".dropdown-toggle")
@@ -290,22 +365,19 @@
         return;
       }
 
-      // Update the button text to show selected mode
       modeButton.text(selectedMode);
+      $("#Kp, #Ki, #Kd, #SetPoint2").closest(".mb-3").hide();
 
-      // Hide all parameter inputs first
-      $("#Kp, #Ki, #Kd").closest(".mb-3").hide();
-
-      // Show the appropriate inputs based on selected mode
       if (selectedMode === "P") {
         $("#Kp").closest(".mb-3").show();
       } else if (selectedMode === "PD") {
         $("#Kp, #Kd").closest(".mb-3").show();
       } else if (selectedMode === "PID") {
         $("#Kp, #Ki, #Kd").closest(".mb-3").show();
+      } else if (selectedMode === "Dua Posisi") {
+        $("#SetPoint2").closest(".mb-3").show();
       }
 
-      // Enable form inputs when a valid mode is selected
       $("#control-form input").prop("disabled", false);
       $("#control-form button").not(".dropdown-toggle").prop("disabled", false);
     });
@@ -314,13 +386,13 @@
     $("#control-form").submit(function (e) {
       e.preventDefault();
 
-      // Get all form values
       const formData = {
         mode: $(".dropdown-toggle").text() || null,
         kp: $("#Kp").val() || null,
         ki: $("#Ki").val() || null,
         kd: $("#Kd").val() || null,
         set_point: $("#SetPoint").val() || null,
+        set_point2: $("#SetPoint2").val() || null,
         time_sampling: $("#timesampling").val() || null,
       };
 
@@ -331,38 +403,83 @@
         data: formData,
         success: function (response) {
           console.log("Success:", response);
-          alert("Control parameters sent successfully!"); //Control parameters sent successfully!
+          alert("Control parameters sent successfully!");
+
+          // Start updating the chart based on time sampling
+          let timeSampling = parseInt(formData.time_sampling);
+          let setPoint1 = parseFloat(formData.set_point);
+          let setPoint2 = parseFloat(formData.set_point2);
+          let startTime = Date.now();
+          let elapsedTime = 0;
+
+          // Clear previous data
+          rpmChart.data.labels = [];
+          rpmChart.data.datasets.forEach((dataset) => {
+            dataset.data = [];
+          });
+
+          intervalId = setInterval(function () {
+            elapsedTime = Date.now() - startTime;
+            if (elapsedTime >= timeSampling) {
+              clearInterval(intervalId);
+              //alert("Time sampling completed.");
+              return;
+            }
+
+            // Get output data from the database
+            $.ajax({
+              type: "GET",
+              url: "/get-output-data", // Endpoint to fetch RPM data
+              success: function (outputData) {
+                let output = outputData[outputData.length - 1]; // Get latest value
+                rpmChart.data.labels.push(elapsedTime);
+                rpmChart.data.datasets[0].data.push(setPoint1);
+                rpmChart.data.datasets[1].data.push(setPoint2);
+                rpmChart.data.datasets[2].data.push(output);
+                rpmChart.update();
+              },
+              error: function (error) {
+                console.error("Error fetching output data:", error);
+              },
+            });
+          }, 100); // Update every 100ms or as needed
         },
         error: function (xhr, status, error) {
           console.error("Error:", error);
-          alert("Error!"); //Error sending control parameters!
+          alert("Error sending control parameters!");
         },
       });
-    });
-
-    // Clear button handler
-    $(".btn-danger").click(function () {
-      $("#control-form")[0].reset();
-      $(".dropdown-toggle").text("Select Mode"); //Tombol dropdown (yang menampilkan mode) akan dikembalikan ke teks default: "Select Mode".
-      $("#Kp, #Ki, #Kd").closest(".mb-3").hide(); //Menyembunyikan lagi semua input parameter PID
-      $("#control-form input").prop("disabled", true); //Semua input di dalam form dikunci lagi (tidak bisa diketik).
-      $(".btn-group button").not(".dropdown-toggle").prop("disabled", true); //Semua tombol dalam grup tombol selain dropdown juga dinonaktifkan.
     });
 
     // Stop button handler
     $(".btn-warning").click(function () {
-      // Send stop command to server
-      $.post("/dashboard/stop", function (response) {
-        console.log("Stop command sent:", response);
-        alert("System stopped!");
+      clearInterval(intervalId);
+      alert("System stopped!");
+    });
+
+    // Clear button handler
+    $(".btn-danger:not(#logout)").click(function () {
+      $("#control-form")[0].reset();
+      $(".dropdown-toggle").text("Select Mode");
+      $("#Kp, #Ki, #Kd").closest(".mb-3").hide();
+      $("#control-form input").prop("disabled", true);
+      $(".btn-group button").not(".dropdown-toggle").prop("disabled", true);
+
+      // Clear the chart data
+      rpmChart.data.labels = [];
+      rpmChart.data.datasets.forEach((dataset) => {
+        dataset.data = [];
       });
+      rpmChart.update();
+
+      alert("The form has been deleted, please select control mode.");
     });
 
     // Logout button handler
     $("#logout").click(function () {
-      // Send logout command to server
       $.post("/logout", function (response) {
         console.log("Logout command sent:", response);
+        alert("Logged out successfully!");
         window.location.href = "/";
       }).fail(function (xhr, status, error) {
         console.error("Logout failed:", error);

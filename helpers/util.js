@@ -6,6 +6,10 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   password: process.env.DB_PASS,
   port: process.env.DB_PORT,
+  ssl: {
+    rejectUnauthorized: true,
+    ca: process.env.CA_CERT.replace(/\\n/g, "\n"),
+  },
 });
 
 class Response {

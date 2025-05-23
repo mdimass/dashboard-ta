@@ -1,15 +1,79 @@
 <%- include('./partials/header') %>
+
+<!-- Google Fonts -->
+<link
+  href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+  rel="stylesheet"
+/>
+
+<!-- Custom Styles -->
+<style>
+  body {
+    background-color: #ffffff;
+    font-family: "Poppins", sans-serif;
+  }
+
+  .card {
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    padding: 40px;
+    background-color: #ffffff;
+    box-shadow: 10px 20px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-primary {
+    background-color: #007bff;
+    border: none;
+    padding: 12px;
+    font-weight: 600;
+    transition: background-color 0.3s, transform 0.3s;
+  }
+
+  .btn-primary:hover {
+    background-color: #012e5e;
+    transform: translateY(-2px);
+  }
+
+  .form-floating input {
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    transition: border-color 0.3s;
+  }
+
+  .form-floating input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.281);
+  }
+
+  .logo {
+    max-height: 95px;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    color: #333;
+    font-weight: 600;
+  }
+</style>
+
 <div
-  class="d-flex align-items-center py-4 bg-body-tertiary"
-  style="height: 93vh; overflow: hidden"
+  class="d-flex align-items-center justify-content-center"
+  style="height: 90vh"
 >
-  <!-- height vh adalah ukuran kontainer footer -->
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-md-6 col-lg-4">
-        <div class="card shadow-sm p-4">
-          <h1 class="text-center mb-4">Login</h1>
-          <form class="form-horizontal" action="" method="post">
+        <div class="card p-4">
+          <!-- Logo -->
+          <div class="text-center mb-4">
+            <img src="/public/images/logo.png" alt="logo" class="logo" />
+          </div>
+
+          <!-- Judul -->
+          <h1 class="mb-4 text-center">Login</h1>
+
+          <!-- Form -->
+          <form action="" method="post">
             <div class="mb-3">
               <div class="form-floating">
                 <input
@@ -17,13 +81,14 @@
                   class="form-control"
                   id="nama_pengguna"
                   name="nama_pengguna"
-                  placeholder="Nama Pengguna"
+                  placeholder="Nama_NIM"
+                  required
                 />
-                <label for="nama_pengguna">Nama Pengguna</label>
+                <label for="nama_pengguna">Nama_NIM</label>
               </div>
             </div>
 
-            <div class="d-grid">
+            <div class="d-grid mb-3">
               <button type="submit" class="btn btn-primary">Masuk</button>
             </div>
           </form>
