@@ -51,6 +51,13 @@ app.use(
 app.use("/", indexRouter);
 app.use("/dashboard", dashboardRouter);
 
+//stop handler
+app.post("/dashboard/stop", (req, res) => {
+  // Logika menghentikan sistem
+  console.log("Stop command received");
+  res.send("Stopped");
+});
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));

@@ -92,7 +92,7 @@
   data-bs-theme="dark"
 >
   <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3 fs-6 text-white" href="#"
-    >Polines</a
+    >Kendali PID Kecepatan Motor DC</a
   >
 
   <ul class="navbar-nav flex-row d-md-none">
@@ -137,7 +137,7 @@
           <div class="offcanvas-body d-md-flex flex-column p-2 pt-lg-3">
             <!-- Tempat Form -->
             <div class="mb-3">
-              <label for="mode-kontrol" class="form-label">Menu Kontrol</label>
+              <label for="mode-kontrol" class="form-label">Control Mode</label>
               <div id="mode-kontrol" class="dropdown w-100">
                 <button
                   class="btn btn-primary dropdown-toggle w-100"
@@ -150,6 +150,12 @@
                 <ul class="dropdown-menu w-100">
                   <li>
                     <p class="dropdown-item">Select Mode</p>
+                  </li>
+                  <li>
+                    <p class="dropdown-item">Satu Posisi</p>
+                  </li>
+                  <li>
+                    <p class="dropdown-item">Dua Posisi</p>
                   </li>
                   <li>
                     <p class="dropdown-item">P</p>
@@ -197,7 +203,7 @@
               />
             </div>
             <div class="mb-3">
-              <label for="SetPoint" class="form-label">Set Point :</label>
+              <label for="SetPoint" class="form-label">SetPoint :</label>
               <input
                 type="number"
                 min="0"
@@ -218,7 +224,7 @@
                 class="form-control"
                 id="timesampling"
                 name="timesampling"
-                placeholder="Enter timesampling"
+                placeholder="Enter Time Sampling"
               />
             </div>
 
@@ -240,16 +246,15 @@
       <div
         class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
       >
+        <!-- JUDUL -->
         <h1 class="h2">Dashboard</h1>
+
         <div class="btn-toolbar mb-2 mb-md-0">
-          <!-- <div class="btn-group me-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary">
-              Share
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-secondary">
+          <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-dark">
               Export
             </button>
-          </div> -->
+          </div>
           <button type="button" id="logout" class="btn btn-danger">
             Logout
           </button>
@@ -263,9 +268,9 @@
 <script>
   $(document).ready(function () {
     // Hide PID-related inputs initially
-    $("#Kp, #Ki, #Kd").closest(".mb-3").hide();
+    $("#Kp, #Ki, #Kd").closest(".mb-3").hide(); //Menyembunyikan elemen Kp, Ki, dan Kd beserta label atau kontainernya
 
-    // Disable form inputs initially
+    // Disable form inputs initially , Semua input dan tombol di form #control-form dinonaktifkan kecuali tombol dropdown (mode selector).
     $("#control-form input").prop("disabled", true);
     $("#control-form button").not(".dropdown-toggle").prop("disabled", true);
 
@@ -326,11 +331,11 @@
         data: formData,
         success: function (response) {
           console.log("Success:", response);
-          alert("Control parameters sent successfully!");
+          alert("Control parameters sent successfully!"); //Control parameters sent successfully!
         },
         error: function (xhr, status, error) {
           console.error("Error:", error);
-          alert("Error sending control parameters!");
+          alert("Error!"); //Error sending control parameters!
         },
       });
     });
@@ -338,10 +343,10 @@
     // Clear button handler
     $(".btn-danger").click(function () {
       $("#control-form")[0].reset();
-      $(".dropdown-toggle").text("Select Mode");
-      $("#Kp, #Ki, #Kd").closest(".mb-3").hide();
-      $("#control-form input").prop("disabled", true);
-      $(".btn-group button").not(".dropdown-toggle").prop("disabled", true);
+      $(".dropdown-toggle").text("Select Mode"); //Tombol dropdown (yang menampilkan mode) akan dikembalikan ke teks default: "Select Mode".
+      $("#Kp, #Ki, #Kd").closest(".mb-3").hide(); //Menyembunyikan lagi semua input parameter PID
+      $("#control-form input").prop("disabled", true); //Semua input di dalam form dikunci lagi (tidak bisa diketik).
+      $(".btn-group button").not(".dropdown-toggle").prop("disabled", true); //Semua tombol dalam grup tombol selain dropdown juga dinonaktifkan.
     });
 
     // Stop button handler
