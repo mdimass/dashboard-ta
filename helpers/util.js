@@ -8,7 +8,7 @@ const pool = new Pool({
   port: process.env.DB_PORT,
   ssl: {
     rejectUnauthorized: true,
-    ca: process.env.CA_CERT.replace(/\\n/g, "\n"),
+    ca: process.env.CA_CERT?.replace(/\\n/g, "\n"),
   },
 });
 
