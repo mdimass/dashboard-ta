@@ -40,7 +40,7 @@ module.exports = function (db) {
 
         // Kirim data pengguna ke topik MQTT
         mqttClient.publish(
-          "your/topicTA",
+          "polines/TA2025",
           JSON.stringify(usersData),
           (mqttErr) => {
             if (mqttErr) {
@@ -56,21 +56,6 @@ module.exports = function (db) {
       // Kirim data pengguna sebagai JSON ke klien HTTP
       res.json(usersData); // Mengirim semua data pengguna sebagai JSON
     });
-  });
-
-  // Rute GET "/datamasuk"
-  router.get("/datamasuk", function (req, res, next) {
-    db.query(
-      "SELECT * FROM your_table_name ORDER BY created_at DESC",
-      (err, result) => {
-        if (err) {
-          console.error("Database error:", err);
-          return res.status(500).send("Database query error");
-        }
-
-        res.json(result.rows); // Kirim data sebagai JSON
-      }
-    );
   });
 
   // Rute POST "/"
