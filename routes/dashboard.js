@@ -179,6 +179,7 @@ module.exports = function (db) {
             mode: values[5],
             set_point2: values[6],
             user_id: values[7],
+            nama_pengguna: user.nama_pengguna,
           };
 
           // Publish data hasil update ke topik MQTT
