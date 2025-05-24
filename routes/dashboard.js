@@ -179,7 +179,7 @@ module.exports = function (db) {
             time_sampling: values[4],
             mode: values[5],
             set_point2: values[6],
-            nama_pengguna: values[7]
+            nama_pengguna: values[7],
             user_id: values[8],
           };
 
