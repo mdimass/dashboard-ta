@@ -100,6 +100,7 @@ module.exports = function (db) {
       set_point = null,
       set_point2 = null,
       time_sampling = null,
+      nama_pengguna = null,
     } = req.body;
 
     console.log("Received values:", {
@@ -110,6 +111,7 @@ module.exports = function (db) {
       set_point,
       set_point2,
       time_sampling,
+      nama_pengguna,
     });
 
     // Pastikan session user tersedia
@@ -147,6 +149,7 @@ module.exports = function (db) {
           time_sampling || "0",
           mode,
           set_point2 === "" ? "0" : set_point2,
+          nama_pengguna,
           user.id_user,
         ];
 
