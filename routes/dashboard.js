@@ -160,8 +160,8 @@ module.exports = function (db) {
         // Query untuk update data user
         const query = `
           UPDATE users
-          SET setpoint = $1, kp = $2, ki = $3, kd = $4, time_sampling = $5, mode_kendali = $6, setpoint2 = $7
-          WHERE id_user = $8
+          SET setpoint = $1, kp = $2, ki = $3, kd = $4, time_sampling = $5, mode_kendali = $6, setpoint2 = $7, nama_pengguna = $8
+          WHERE id_user = $9
         `;
 
         db.query(query, values, (err, result) => {
