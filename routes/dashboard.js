@@ -13,7 +13,6 @@ const mqttOptions = {
   connectTimeout: 5000,
 };
 
-// URL broker MQTT menggunakan WebSocket Secure
 const brokerUrl =
   "wss://3107ee96d14c4007908cdd3e772e6600.s1.eu.hivemq.cloud:8884/mqtt";
 
@@ -23,22 +22,19 @@ const mqttClient = mqtt.connect(brokerUrl, mqttOptions);
 mqttClient.on("connect", () => {
   console.log("Connected to MQTT broker");
 });
-
 mqttClient.on("error", (err) => {
   console.error("MQTT connection error:", err);
 });
-
 mqttClient.on("offline", () => {
   console.error("MQTT client went offline");
 });
-
 mqttClient.on("close", () => {
   console.log("MQTT connection closed");
 });
 
 // Ekspor router
 module.exports = function (db) {
-  // GET: Homepage (dashboard jika ada user)
+  // GET: Homepage
   router.get("/", function (req, res, next) {
     db.query("SELECT * FROM users", (err, data) => {
       if (err) {
@@ -91,8 +87,9 @@ module.exports = function (db) {
       set_point = null,
       set_point2 = null,
       time_sampling = null,
-      nama_pengguna = null,
     } = req.body;
+
+    let nama_pengguna = req.body.nama_pengguna;
 
     console.log("Received values:", {
       mode,
@@ -126,6 +123,11 @@ module.exports = function (db) {
       .then((user) => {
         if (!user) return res.redirect("/");
 
+        // Ambil nama_pengguna dari session jika tidak dikirim dari request
+        if (!nama_pengguna && user.nama_pengguna) {
+          nama_pengguna = user.nama_pengguna;
+        }
+
         const values = [
           set_point || "0",
           kp === "" ? "0" : kp,
@@ -138,7 +140,7 @@ module.exports = function (db) {
           user.id_user,
         ];
 
-        // Validasi input minimal
+        // Validasi input dasar
         for (let i = 0; i < 5; i++) {
           if (values[i] === null || values[i] === "") {
             return res.status(400).send(`Invalid input for parameter ${i + 1}`);
