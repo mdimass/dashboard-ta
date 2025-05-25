@@ -153,7 +153,7 @@ module.exports = function (db) {
         // Validasi input (cek 5 parameter pertama)
         for (let i = 0; i < 7; i++) {
           if (values[i] === null || values[i] === "") {
-            return res.status(400).send(`Invalid input for parameter ${i + 1}`);
+            return res.status(400).send("Invalid input for parameter ${i + 1}");
           }
         }
 
@@ -170,7 +170,6 @@ module.exports = function (db) {
             return res.status(500).send("Database query error");
           }
 
-          // Tambahkan nama_pengguna ke dataToSend
           const dataToSend = {
             set_point: values[0],
             kp: values[1],
@@ -180,7 +179,6 @@ module.exports = function (db) {
             mode: values[5],
             set_point2: values[6],
             user_id: values[7],
-            nama_pengguna: user.nama_pengguna, // Tambahkan nama_pengguna
           };
 
           // Publish data hasil update ke topik MQTT
@@ -206,6 +204,6 @@ module.exports = function (db) {
       });
   });
 
-  // Kembalikan router untuk digunakan di INDEX
+  // Kembalikan router untuk digunakan di app utama
   return router;
 };

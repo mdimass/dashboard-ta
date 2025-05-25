@@ -3,7 +3,7 @@ var express = require("express");
 // Membuat router baru untuk menangani route khusus
 var router = express.Router();
 
-// Mengekspor fungsi utama yang menerima objek `db` (koneksi database)
+// Mengekspor fungsi utama yang menerima objek db (koneksi database)
 module.exports = function (db) {
   // Route GET untuk halaman utama ("/")
   router.get("/", function (req, res, next) {
