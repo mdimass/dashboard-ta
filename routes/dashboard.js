@@ -153,7 +153,7 @@ module.exports = function (db) {
         // Validasi input (cek 5 parameter pertama)
         for (let i = 0; i < 7; i++) {
           if (values[i] === null || values[i] === "") {
-            return res.status(400).send(`Invalid input for parameter ${i + 1}`);
+            return res.status(400).send("Invalid input for parameter ${i + 1}");
           }
         }
 
