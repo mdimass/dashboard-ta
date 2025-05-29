@@ -2,6 +2,8 @@ const express = require("express");
 const mqtt = require("mqtt");
 const router = express.Router();
 
+let dbClient; // buat referensi global ke db
+
 const mqttOptions = {
   username: "dimas",
   password: "TaEKD2025",
@@ -17,7 +19,16 @@ const mqttClient = mqtt.connect(brokerUrl, mqttOptions);
 
 mqttClient.on("connect", () => {
   console.log("Connected to MQTT broker");
+
+  mqttClient.subscribe("RPM/output", (err) => {
+    if (err) {
+      console.error("Subscribe error:", err);
+    } else {
+      console.log("Subscribed to RPM/output");
+    }
+  });
 });
+
 mqttClient.on("error", (err) => {
   console.error("MQTT connection error:", err);
 });
@@ -28,12 +39,39 @@ mqttClient.on("close", () => {
   console.log("MQTT connection closed");
 });
 
+mqttClient.on("message", (topic, message) => {
+  if (topic === "RPM/output") {
+    try {
+      const data = JSON.parse(message.toString());
+      console.log("Received RPM data:", data);
+
+      // Simpan ke database table temporary kolom value
+      if (dbClient) {
+        const query = `INSERT INTO output (value) VALUES ($1)`;
+        dbClient.query(query, [data.rpm], (err) => {
+          if (err) {
+            console.error("Error inserting RPM to DB:", err);
+          } else {
+            console.log("RPM data saved to database");
+          }
+        });
+      } else {
+        console.error("Database client not initialized");
+      }
+    } catch (e) {
+      console.error("Error parsing RPM data:", e);
+    }
+  }
+});
+
 function ensureAuthenticated(req, res, next) {
   if (req.session.user) return next();
   res.redirect("/");
 }
 
 module.exports = function (db) {
+  dbClient = db; // assign db client ke variabel global
+
   router.get("/", ensureAuthenticated, function (req, res) {
     res.render("dashboard/dashboard", { title: "Polines" });
   });
