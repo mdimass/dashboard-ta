@@ -1,1 +1,1 @@
-"POLITEKNIK NEGERI SEMARANG"
+"Dimas Syamsy"
