@@ -83,15 +83,29 @@
     display: block !important;
   }
 
-  /* Set canvas to fill the available space */
-  #rpmChart {
-    height: 400px; /* Adjust as necessary */
-    width: 100%; /* Fill the width */
+  #system-notice {
+    position: fixed;
+    bottom: 80px;
+    left: 10px;
+    background-color: #d4edda;
+    color: #155724;
+    padding: 6px 12px;
+    border-left: 6px solid #28a745;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    display: none;
+    font-size: 12px; /* Diperkecil */
+    font-weight: 500;
+  }
+
+  #system-notice.show {
+    display: block !important;
   }
 </style>
 
-<!-- Include Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
 <header
   class="navbar sticky-top bg-dark flex-md-nowrap p-0 shadow"
@@ -119,8 +133,8 @@
   </ul>
 </header>
 
-<div class="container-fluid" style="height: 86vh">
-  <div class="row" style="height: 100%">
+<div class="container-fluid">
+  <div class="row flex-nowrap">
     <div
       class="sidebar border border-right col-md-3 col-lg-2 p-2 bg-body-tertiary"
     >
@@ -184,7 +198,7 @@
                 id="Kp"
                 name="kp"
                 placeholder="Enter Kp"
-                step="0.001"
+                step="0.000001"
               />
             </div>
             <div class="mb-3">
@@ -196,7 +210,7 @@
                 id="Ki"
                 name="ki"
                 placeholder="Enter Ki"
-                step="0.001"
+                step="0.000001"
               />
             </div>
             <div class="mb-3">
@@ -208,24 +222,24 @@
                 id="Kd"
                 name="kd"
                 placeholder="Enter Kd"
-                step="0.001"
+                step="0.000001"
               />
             </div>
 
             <div class="mb-3">
-              <label for="SetPoint" class="form-label">SetPoint :</label>
+              <label for="SetPoint" class="form-label">Setpoint :</label>
               <input
                 type="number"
                 min="0"
                 class="form-control"
                 id="SetPoint"
                 name="setpoint"
-                placeholder="Enter SetPoint"
+                placeholder="Enter Setpoint"
               />
             </div>
             <div class="mb-3">
-              <label for="SetPoint2" class="forl-label hidden"
-                >SetPoint 2:</label
+              <label for="SetPoint2" class="form-label hidden"
+                >Setpoint 2:</label
               >
               <input
                 type="number"
@@ -233,12 +247,12 @@
                 class="form-control hidden"
                 id="SetPoint2"
                 name="setpoint2"
-                placeholder="Enter SetPoint 2"
+                placeholder="Enter Setpoint 2"
               />
             </div>
             <div class="mb-3">
               <label for="timesampling" class="form-label"
-                >Time Sampling (ms) :</label
+                >Duration (ms) :</label
               >
               <input
                 type="number"
@@ -246,7 +260,7 @@
                 class="form-control"
                 id="timesampling"
                 name="timesampling"
-                placeholder="Enter Time Sampling"
+                placeholder="Enter Duration"
               />
             </div>
 
@@ -256,34 +270,50 @@
               aria-label="Basic mixed styles example"
             >
               <button type="submit" class="btn btn-success">Start</button>
-              <button type="button" class="btn btn-warning">Stop</button>
-              <button type="button" class="btn btn-danger">Clear</button>
+              <button type="button" class="btn btn-warning">Clear</button>
+            </div>
+
+            <div
+              id="status-alert"
+              class="alert alert-info d-none"
+              role="alert"
+            ></div>
+            <div
+              id="system-notice"
+              class="alert alert-success d-none"
+              role="alert"
+            >
+              ✅ System Connected
             </div>
           </div>
         </form>
       </div>
     </div>
-
+    <!-- perbaikan -->
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
       <div
         class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom"
       >
         <h4 class="h4">Dashboard Kendali Kecepatan Motor DC</h4>
-        <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-toolbar mb-2 mb-md-0 gap-2">
           <div class="btn-group me-2">
-            <button type="button" class="btn btn-sm btn-outline-dark">
+            <button id="exportBtn" class="btn btn-sm btn-outline-dark">
               Export
             </button>
           </div>
-          <button type="button" id="logout" class="btn btn-danger">
-            Logout
-          </button>
+          <button id="logout" class="btn btn-danger">Logout</button>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-12">
-          <canvas id="rpmChart"></canvas>
+          <!-- <canvas id="rpmChart" style="height: 770px; width: 100%"></canvas> -->
+          <div
+            class="position-relative"
+            style="min-height: 300px; height: 77vh"
+          >
+            <canvas id="rpmChart" style="width: 100%; height: 100%"></canvas>
+          </div>
         </div>
       </div>
     </main>
@@ -298,57 +328,6 @@
     // Disable form inputs initially
     $("#control-form input").prop("disabled", true);
     $("#control-form button").not(".dropdown-toggle").prop("disabled", true);
-
-    // Initialize RPM Chart
-    const ctx = document.getElementById("rpmChart").getContext("2d");
-    const rpmChart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: [], // Time sampling labels
-        datasets: [
-          {
-            label: "Set Point 1 (RPM)",
-            data: [],
-            borderColor: "rgba(75, 192, 192, 1)",
-            backgroundColor: "rgba(75, 192, 192, 0.2)",
-            borderWidth: 1,
-          },
-          {
-            label: "Set Point 2 (RPM)",
-            data: [],
-            borderColor: "rgba(255, 99, 132, 1)",
-            backgroundColor: "rgba(255, 99, 132, 0.2)",
-            borderWidth: 1,
-          },
-          {
-            label: "Output (RPM)",
-            data: [],
-            borderColor: "rgba(54, 162, 235, 1)",
-            backgroundColor: "rgba(54, 162, 235, 0.2)",
-            borderWidth: 1,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: "Time Sampling (ms)",
-            },
-          },
-          y: {
-            title: {
-              display: true,
-              text: "RPM",
-            },
-          },
-        },
-      },
-    });
-
-    let intervalId;
 
     // When a mode is selected from the dropdown
     $(".dropdown-item").click(function () {
@@ -382,9 +361,71 @@
       $("#control-form button").not(".dropdown-toggle").prop("disabled", false);
     });
 
+    $("#exportBtn").click(function () {
+      window.location.href = "/dashboard/export";
+    });
+
+    let waitingForModeActive = false;
+
     // Form submission handler
     $("#control-form").submit(function (e) {
       e.preventDefault();
+
+      //validasi input
+      const selectedMode = $(".dropdown-toggle").text().trim();
+      if (selectedMode === "Select Mode") {
+        alert("Please select the control mode first!");
+        return;
+      }
+
+      let valid = true;
+      let messages = [];
+      if (selectedMode === "P") {
+        if (!$("#Kp").val()) {
+          valid = false;
+          messages.push("Kp variable must be filled!");
+        }
+      } else if (selectedMode === "PD") {
+        if (!$("#Kp").val()) {
+          valid = false;
+          messages.push("Kp variable must be filled!");
+        }
+        if (!$("#Kd").val()) {
+          valid = false;
+          messages.push("Kd variable must be filled!");
+        }
+      } else if (selectedMode === "PID") {
+        if (!$("#Kp").val()) {
+          valid = false;
+          messages.push("Kp variable must be filled!");
+        }
+        if (!$("#Ki").val()) {
+          valid = false;
+          messages.push("Ki variable must be filled!");
+        }
+        if (!$("#Kd").val()) {
+          valid = false;
+          messages.push("Kd variable must be filled!");
+        }
+      } else if (selectedMode === "Dua Posisi") {
+        if (!$("#SetPoint2").val()) {
+          valid = false;
+          messages.push("Setpoint 2 is required!");
+        }
+      }
+      if (!$("#SetPoint").val()) {
+        valid = false;
+        messages.push("Setpoint is required!");
+      }
+      if (!$("#timesampling").val()) {
+        valid = false;
+        messages.push("Duration is required!");
+      }
+
+      if (!valid) {
+        alert(messages.join("\n"));
+        return;
+      }
 
       const formData = {
         mode: $(".dropdown-toggle").text() || null,
@@ -403,46 +444,8 @@
         data: formData,
         success: function (response) {
           console.log("Success:", response);
-          alert("Control parameters sent successfully!");
-
-          // Start updating the chart based on time sampling
-          let timeSampling = parseInt(formData.time_sampling);
-          let setPoint1 = parseFloat(formData.set_point);
-          let setPoint2 = parseFloat(formData.set_point2);
-          let startTime = Date.now();
-          let elapsedTime = 0;
-
-          // Clear previous data
-          rpmChart.data.labels = [];
-          rpmChart.data.datasets.forEach((dataset) => {
-            dataset.data = [];
-          });
-
-          intervalId = setInterval(function () {
-            elapsedTime = Date.now() - startTime;
-            if (elapsedTime >= timeSampling) {
-              clearInterval(intervalId);
-              //alert("Time sampling completed.");
-              return;
-            }
-
-            // Get output data from the database
-            $.ajax({
-              type: "GET",
-              url: "/get-output-data", // Endpoint to fetch RPM data
-              success: function (outputData) {
-                let output = outputData[outputData.length - 1]; // Get latest value
-                rpmChart.data.labels.push(elapsedTime);
-                rpmChart.data.datasets[0].data.push(setPoint1);
-                rpmChart.data.datasets[1].data.push(setPoint2);
-                rpmChart.data.datasets[2].data.push(output);
-                rpmChart.update();
-              },
-              error: function (error) {
-                console.error("Error fetching output data:", error);
-              },
-            });
-          }, 100); // Update every 100ms or as needed
+          alert("Control parameter sent successfully");
+          waitingForModeActive = true; // Aktifkan flag untuk tunggu MQTT
         },
         error: function (xhr, status, error) {
           console.error("Error:", error);
@@ -451,28 +454,46 @@
       });
     });
 
-    // Stop button handler
-    $(".btn-warning").click(function () {
-      clearInterval(intervalId);
-      alert("System stopped!");
-    });
-
     // Clear button handler
-    $(".btn-danger:not(#logout)").click(function () {
+    $(".btn-warning").click(function () {
       $("#control-form")[0].reset();
       $(".dropdown-toggle").text("Select Mode");
       $("#Kp, #Ki, #Kd").closest(".mb-3").hide();
       $("#control-form input").prop("disabled", true);
       $(".btn-group button").not(".dropdown-toggle").prop("disabled", true);
 
-      // Clear the chart data
-      rpmChart.data.labels = [];
+      // Clear chart data
+      rpmChart.data.labels = []; // Clear time labels
       rpmChart.data.datasets.forEach((dataset) => {
-        dataset.data = [];
+        dataset.data = []; // Clear dataset values
       });
-      rpmChart.update();
+      rpmChart.update(); // Update the chart
 
-      alert("The form has been deleted, please select control mode.");
+      // Sembunyikan notifikasi status\
+      $("#status-alert").addClass("d-none").removeClass("show");
+
+      // Reset flag (opsional, jika sedang menunggu mode_active)
+      waitingForModeActive = false;
+
+      // Enable tombol Export
+      $("#exportBtn").prop("disabled", false);
+
+      // Tambahkan ini untuk clear database/output
+      $.ajax({
+        url: "/dashboard/clear-data",
+        type: "DELETE",
+        success: function (resp) {
+          alert(
+            "The form has been successfully deleted. Output and export data have also been removed. Please select a control mode to proceed."
+          );
+        },
+        error: function (xhr) {
+          alert(
+            "Gagal menghapus data output: " +
+              (xhr.responseJSON?.message || xhr.status)
+          );
+        },
+      });
     });
 
     // Logout button handler
@@ -486,6 +507,186 @@
         alert("Error during logout. Please try again.");
       });
     });
+  });
+
+  // Initialize an empty chart
+  const mqttOptions = {
+    username: "dimas",
+    password: "TaEKD2025",
+    clientId: "client_" + Math.random().toString(16).substr(2, 8),
+  };
+
+  const brokerUrl =
+    "wss://3107ee96d14c4007908cdd3e772e6600.s1.eu.hivemq.cloud:8884/mqtt"; // WebSocket URL
+  const mqttClient = mqtt.connect(brokerUrl, mqttOptions);
+
+  mqttClient.on("connect", () => {
+    console.log("Connected to MQTT broker");
+    mqttClient.subscribe("RPM/output/#", (err) => {
+      if (err) {
+        console.error("Subscribe error:", err);
+      } else {
+        console.log("Subscribed to RPM/output/#");
+      }
+    });
+    mqttClient.subscribe("RPM/status/#", (err) => {
+      if (err) {
+        console.error("Subscribe error:", err);
+      } else {
+        console.log("Subscribed to RPM/status/#");
+      }
+    });
+    mqttClient.subscribe("system/#", (err) => {
+      if (err) {
+        console.error("Subscribe error:", err);
+      } else {
+        console.log("Subscribed to system/#");
+      }
+    });
+  });
+
+  const ctx = document.getElementById("rpmChart").getContext("2d");
+  const rpmChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [], // Time labels
+      datasets: [
+        {
+          label: "Set Point 1 (RPM)",
+          data: [],
+          borderColor: "rgba(75, 192, 192, 1)",
+          backgroundColor: "rgba(75, 192, 192, 0.2)",
+          borderWidth: 6,
+          pointRadius: 0, // Hilangkan titik
+          tension: 0.3, // Opsional: membuat garis agak halus (smooth)
+        },
+        {
+          label: "Set Point 2 (RPM)",
+          data: [],
+          borderColor: "rgba(255, 99, 132, 1)",
+          backgroundColor: "rgba(255, 99, 132, 0.2)",
+          borderWidth: 6,
+          pointRadius: 0,
+          tension: 0.3,
+        },
+        {
+          label: "Output (RPM)",
+          data: [],
+          borderColor: "rgba(54, 162, 235, 1)",
+          backgroundColor: "rgba(54, 162, 235, 0.2)",
+          borderWidth: 6,
+          pointRadius: 0,
+          tension: 0.3,
+        },
+      ],
+    },
+    options: {
+      // animation: {
+      //   //pembaruan animasi
+      //   duration: 0, // cepat dan tidak terlalu mengganggu
+      //   easing: "linear", //Kecepatan konstan
+      // },
+      responsive: true,
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: "Time",
+          },
+        },
+        y: {
+          title: {
+            display: true,
+            text: "RPM",
+          },
+        },
+      },
+    },
+  });
+
+  const loggedInUser = "<%= user.nama_pengguna %>";
+  console.log("Logged in as:", loggedInUser);
+  // Update chart with new data in MQTT message handler
+  mqttClient.on("message", (topic, message) => {
+    if (topic.startsWith("RPM/output/")) {
+      try {
+        const data = JSON.parse(message.toString());
+        console.log("Received data:", data); // Debugging line
+
+        if (data.nama_pengguna !== loggedInUser) return;
+        const rpmValue = data.RPM;
+
+        // Assuming you have set points stored
+        const setPoint1 = parseFloat($("#SetPoint").val()) || 0;
+        const setPoint2 = parseFloat($("#SetPoint2").val()) || 0;
+        const currentTime = data.t; // Use 't' from JSON
+        //const currentTime = new Date().toLocaleTimeString(); // Get current time
+
+        console.log(
+          "Set Point 1:",
+          setPoint1,
+          "Set Point 2:",
+          setPoint2,
+          "RPM Value:",
+          rpmValue
+        ); // Debugging line
+        // Push new data to the chart
+        rpmChart.data.labels.push(currentTime);
+        rpmChart.data.datasets[0].data.push(setPoint1);
+        rpmChart.data.datasets[1].data.push(setPoint2);
+        rpmChart.data.datasets[2].data.push(rpmValue);
+        rpmChart.update();
+      } catch (e) {
+        console.error("Error parsing RPM data:", e);
+      }
+    }
+    // === Handler untuk notifikasi mode aktif ===
+    if (topic.startsWith("RPM/status/")) {
+      try {
+        const statusData = JSON.parse(message.toString());
+
+        if (statusData.notice === "mode_active") {
+          const time = statusData.time || new Date().toLocaleTimeString();
+          const user = statusData.user || "unknown user";
+
+          const noticeText = `Mode aktif oleh ${user} pada ${time}`;
+          $("#status-alert")
+            .removeClass("d-none")
+            .addClass("show")
+            .text(noticeText);
+
+          if (waitingForModeActive) {
+            alert(`Kontrol dimulai: ${noticeText}`);
+            waitingForModeActive = false; // Reset flag
+          }
+
+          // Hilangkan setelah 5 detik (opsional)
+          setTimeout(() => {
+            $("#status-alert").addClass("d-none").removeClass("show");
+          }, 5000);
+        }
+      } catch (e) {
+        console.error("Error parsing status data:", e);
+      }
+    }
+
+    if (topic.startsWith("system/")) {
+      try {
+        const sysData = JSON.parse(message.toString());
+        if (sysData.status === "System Connected") {
+          const time = new Date().toLocaleTimeString();
+
+          $("#system-notice")
+            .removeClass("d-none")
+            .addClass("show")
+            .text(`✅ ${sysData.status} at ${time}`);
+
+          // Auto-hide after 5 seconds
+        }
+      } catch (e) {
+        console.error("Error parsing system status:", e);
+      }
+    }
   });
 </script>
 

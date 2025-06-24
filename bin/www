@@ -8,13 +8,13 @@ var app = require("../index");
 var debug = require("debug")("polines:server");
 var http = require("http");
 
+//baru
+//var { Server } = require("socket.io");
+
 /**
  * Get port from environment and store in Express.
  */
 
-// var port = normalizePort(process.env.PORT || "3000");
-// var hostname = process.env.HOSTNAME || "localhost";
-// app.set("port", port);
 var port = 3000; // Langsung hardcode ke 3000
 var hostname = "0.0.0.0"; // Langsung hardcode ke localhost
 app.set("port", port);
@@ -24,6 +24,30 @@ app.set("port", port);
  */
 
 var server = http.createServer(app);
+
+// //baru
+// // Inisialisasi Socket.IO
+// var io = new Server(server, {
+//   cors: {
+//     origin: "*", // bisa disesuaikan sesuai keamanan kamu
+//     methods: ["GET", "POST"],
+//   },
+// });
+
+// // Simpan ke app.locals agar bisa diakses di file lain
+// app.locals.io = io;
+
+// // Setelah app.locals.io = io;
+// var setupMQTT = require("../routes/mqttClient");
+// setupMQTT(io);
+
+// io.on("connection", (socket) => {
+//   console.log("Socket connected:", socket.id);
+
+//   socket.on("disconnect", () => {
+//     console.log("Socket disconnected:", socket.id);
+//   });
+// });
 
 /**
  * Listen on provided port, on all network interfaces.

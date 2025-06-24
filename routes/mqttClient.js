@@ -3,7 +3,7 @@ const mqtt = require("mqtt");
 const mqttOptions = {
   username: process.env.MQTT_USERNAME,
   password: process.env.MQTT_PASSWORD,
-  clientId: "vercel_client_" + Math.random().toString(16).substr(2, 8),
+  clientId: "mqtt_client_" + Math.random().toString(16).substr(2, 8),
   clean: true,
   reconnectPeriod: 1000,
   connectTimeout: 5000,
