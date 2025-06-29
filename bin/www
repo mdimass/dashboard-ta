@@ -1,67 +1,18 @@
-#!/usr/bin/env node
-
-/**
- * Module dependencies.
- */
-
 var app = require("../index");
 var debug = require("debug")("polines:server");
 var http = require("http");
-
-//baru
-//var { Server } = require("socket.io");
-
-/**
- * Get port from environment and store in Express.
- */
 
 var port = 3000; // Langsung hardcode ke 3000
 var hostname = "0.0.0.0"; // Langsung hardcode ke localhost
 app.set("port", port);
 
-/**
- * Create HTTP server.
- */
-
 var server = http.createServer(app);
-
-// //baru
-// // Inisialisasi Socket.IO
-// var io = new Server(server, {
-//   cors: {
-//     origin: "*", // bisa disesuaikan sesuai keamanan kamu
-//     methods: ["GET", "POST"],
-//   },
-// });
-
-// // Simpan ke app.locals agar bisa diakses di file lain
-// app.locals.io = io;
-
-// // Setelah app.locals.io = io;
-// var setupMQTT = require("../routes/mqttClient");
-// setupMQTT(io);
-
-// io.on("connection", (socket) => {
-//   console.log("Socket connected:", socket.id);
-
-//   socket.on("disconnect", () => {
-//     console.log("Socket disconnected:", socket.id);
-//   });
-// });
-
-/**
- * Listen on provided port, on all network interfaces.
- */
 
 server.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);
 });
 server.on("error", onError);
 server.on("listening", onListening);
-
-/**
- * Normalize a port into a number, string, or false.
- */
 
 function normalizePort(val) {
   var port = parseInt(val, 10);
@@ -78,10 +29,6 @@ function normalizePort(val) {
 
   return false;
 }
-
-/**
- * Event listener for HTTP server "error" event.
- */
 
 function onError(error) {
   if (error.syscall !== "listen") {
@@ -104,10 +51,6 @@ function onError(error) {
       throw error;
   }
 }
-
-/**
- * Event listener for HTTP server "listening" event.
- */
 
 function onListening() {
   var addr = server.address();
